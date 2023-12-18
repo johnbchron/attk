@@ -14,13 +14,16 @@
           inherit system overlays;
         };
         
-        toolchain = pkgs.rust-bin.nightly."2023-11-10".complete;
+        toolchain = pkgs.rust-bin.nightly."2023-11-10".complete.override {
+          targets = [ "wasm32-unknown-unknown" ];
+        };
         
         rust_deps = [ toolchain pkgs.lldb pkgs.bacon pkgs.cargo-nextest ];
         bevy_build_deps = with pkgs; [
           pkg-config
           mold clang lld
           makeWrapper
+          wasm-bindgen-cli sfz
         ];
         bevy_runtime_deps = with pkgs; [
           # udev alsa-lib vulkan-loader pipewire.lib # bevy deps
