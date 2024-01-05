@@ -52,45 +52,17 @@ impl Tile<MapTile> {
   }
 }
 
-pub struct TilePlugin;
+pub struct MapPlugin;
 
-impl Plugin for TilePlugin {
+impl Plugin for MapPlugin {
   fn build(&self, app: &mut App) { app.add_systems(Startup, setup); }
 }
 
 fn setup(
   mut commands: Commands,
   asset_server: Res<AssetServer>,
-  mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+  atlases: Res<TileAtlases>,
 ) {
-  let grass_texture_handle = asset_server.load("textures/tiles/grass.png");
-  let grass_atlas = TextureAtlas::from_grid(
-    grass_texture_handle,
-    Vec2::new(16.0, 16.0),
-    16,
-    16,
-    None,
-    None,
-  );
-  let grass_atlas_handle = texture_atlases.add(grass_atlas);
-
-  let wall_texture_handle = asset_server.load("textures/tiles/wall.png");
-  let wall_atlas = TextureAtlas::from_grid(
-    wall_texture_handle,
-    Vec2::new(16.0, 16.0),
-    14,
-    10,
-    Some(Vec2::new(16.0, 16.0)),
-    None,
-  );
-  let wall_atlas_handle = texture_atlases.add(wall_atlas);
-
-  let atlases = TileAtlases {
-    grass: grass_atlas_handle,
-    wall:  wall_atlas_handle,
-  };
-  commands.insert_resource(atlases.clone());
-
   commands.spawn(Camera2dBundle {
     projection: OrthographicProjection {
       near: -1000.0,

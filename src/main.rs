@@ -10,7 +10,8 @@ fn main() {
     .add_plugins((
       DefaultPlugins.set(ImagePlugin::default_nearest()),
       WorldInspectorPlugin::default(),
-      map::TilePlugin,
+      tile::TilePlugin,
+      map::MapPlugin,
       player::PlayerPlugin,
     ))
     .run();
