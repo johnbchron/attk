@@ -1,8 +1,8 @@
 use bevy::{prelude::*, utils::HashMap};
 
 use crate::tile::{
-  rect_range, Direction8, TextureAtlasWithGrid, Tile, TileAtlases,
-  TilePosition, TileType, VerticalPart,
+  rect_range_with_x_flip, Direction8, TextureAtlasWithGrid, Tile, TileAtlases,
+  TilePosition, TileSheetCoords, TileType, VerticalPart,
 };
 
 enum MapTile {
@@ -17,27 +17,12 @@ enum MapTile {
 
 impl TileType for MapTile {
   fn size(&self) -> Vec2 { Vec2::splat(32.0) }
-  fn coords(&self) -> Vec<(usize, usize)> {
+  fn coords(&self) -> Vec<TileSheetCoords> {
     match self {
-      MapTile::Grass => rect_range(0, 0, 4, 4),
-      MapTile::FloweryGrass => rect_range(4, 0, 4, 4),
-      MapTile::Flagstone => rect_range(0, 4, 2, 3),
+      MapTile::Grass => rect_range_with_x_flip(0, 0, 4, 4),
+      MapTile::FloweryGrass => rect_range_with_x_flip(4, 0, 4, 4),
+      MapTile::Flagstone => rect_range_with_x_flip(0, 4, 2, 3),
       MapTile::TallWall { corner, height } => {
-        // let (x, y) = match corner {
-        //   Direction8::North => (0, 0),
-        //   Direction8::NorthEast => (1, 0),
-        //   Direction8::East => (2, 0),
-        //   Direction8::SouthEast => (3, 0),
-        //   Direction8::South => (0, 1),
-        //   Direction8::SouthWest => (1, 1),
-        //   Direction8::West => (2, 1),
-        //   Direction8::NorthWest => (3, 1),
-        // };
-        // let y = match height {
-        //   VerticalPart::Top => y,
-        //   VerticalPart::Bottom => y + 2,
-        // };
-        // vec![(x, y)]
         todo!()
       }
     }
@@ -105,7 +90,7 @@ fn setup(mut commands: Commands, atlases: Res<TileAtlases>) {
     commands.spawn(SpriteSheetBundle {
       texture_atlas: tile._type.atlas_handle(&atlases).atlas,
       transform: pos.transform(&tile._type),
-      sprite: TextureAtlasSprite::new(tile.index(&atlases)),
+      sprite: tile.texture_atlas_sprite(&atlases),
       ..Default::default()
     });
   }

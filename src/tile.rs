@@ -25,7 +25,7 @@ pub enum VerticalPart {
 
 pub trait TileType {
   fn size(&self) -> Vec2;
-  fn coords(&self) -> Vec<(usize, usize)>;
+  fn coords(&self) -> Vec<TileSheetCoords>;
   fn atlas_handle(&self, atlases: &TileAtlases) -> TextureAtlasWithGrid;
 }
 
@@ -34,9 +34,21 @@ pub fn rect_range(
   y: usize,
   w: usize,
   h: usize,
-) -> Vec<(usize, usize)> {
+) -> Vec<TileSheetCoords> {
   (x..x + w)
-    .flat_map(|i| (y..y + h).map(move |j| (i, j)))
+    .flat_map(|i| (y..y + h).map(move |j| TileSheetCoords::new(i, j)))
+    .collect()
+}
+
+pub fn rect_range_with_x_flip(
+  x: usize,
+  y: usize,
+  w: usize,
+  h: usize,
+) -> Vec<TileSheetCoords> {
+  rect_range(x, y, w, h)
+    .into_iter()
+    .flat_map(|coords| vec![coords.clone(), coords.flip_x()])
     .collect()
 }
 
@@ -46,12 +58,44 @@ pub struct Tile<Ty: TileType> {
 }
 
 impl<Ty: TileType> Tile<Ty> {
-  pub fn coords(&self) -> (usize, usize) {
+  pub fn coords(&self) -> TileSheetCoords {
     let all_variants = self._type.coords();
-    all_variants[self.variant % all_variants.len()]
+    all_variants[self.variant % all_variants.len()].clone()
   }
-  pub fn index(&self, atlases: &TileAtlases) -> usize {
-    self._type.atlas_handle(atlases).index(self.coords())
+  pub fn texture_atlas_sprite(
+    &self,
+    atlases: &TileAtlases,
+  ) -> TextureAtlasSprite {
+    let coords = self.coords();
+    let atlas = self._type.atlas_handle(atlases);
+    atlas.texture_atlas_sprite(coords)
+  }
+}
+
+#[derive(Clone)]
+pub struct TileSheetCoords {
+  x:      usize,
+  y:      usize,
+  flip_x: bool,
+  flip_y: bool,
+}
+
+impl TileSheetCoords {
+  pub fn new(x: usize, y: usize) -> Self {
+    Self {
+      x,
+      y,
+      flip_x: false,
+      flip_y: false,
+    }
+  }
+  pub fn flip_x(mut self) -> Self {
+    self.flip_x = !self.flip_x;
+    self
+  }
+  pub fn flip_y(mut self) -> Self {
+    self.flip_y = !self.flip_y;
+    self
   }
 }
 
@@ -81,6 +125,17 @@ pub struct TextureAtlasWithGrid {
 impl TextureAtlasWithGrid {
   pub fn index(&self, coords: (usize, usize)) -> usize {
     coords.0 + coords.1 * self.grid.0
+  }
+  pub fn texture_atlas_sprite(
+    &self,
+    coords: TileSheetCoords,
+  ) -> TextureAtlasSprite {
+    TextureAtlasSprite {
+      index: self.index((coords.x, coords.y)),
+      flip_x: coords.flip_x,
+      flip_y: coords.flip_y,
+      ..Default::default()
+    }
   }
 }
 
