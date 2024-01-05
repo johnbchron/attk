@@ -1,5 +1,6 @@
+pub mod map;
 pub mod player;
-pub mod tiles;
+pub mod tile;
 
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -9,7 +10,7 @@ fn main() {
     .add_plugins((
       DefaultPlugins.set(ImagePlugin::default_nearest()),
       WorldInspectorPlugin::default(),
-      tiles::TilePlugin,
+      map::TilePlugin,
       player::PlayerPlugin,
     ))
     .run();
