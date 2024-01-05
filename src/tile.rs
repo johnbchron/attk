@@ -141,8 +141,9 @@ impl TextureAtlasWithGrid {
 
 #[derive(Resource, Clone)]
 pub struct TileAtlases {
-  pub grass: TextureAtlasWithGrid,
-  pub wall:  TextureAtlasWithGrid,
+  pub grass:       TextureAtlasWithGrid,
+  pub wall:        TextureAtlasWithGrid,
+  pub player_base: TextureAtlasWithGrid,
 }
 
 impl FromWorld for TileAtlases {
@@ -151,6 +152,8 @@ impl FromWorld for TileAtlases {
 
     let grass_texture_handle = asset_server.load("textures/tiles/grass.png");
     let wall_texture_handle = asset_server.load("textures/tiles/wall.png");
+    let player_base_texture_handle =
+      asset_server.load("textures/player/fbas_1body_human_00.png");
 
     let mut texture_atlases =
       world.get_resource_mut::<Assets<TextureAtlas>>().unwrap();
@@ -183,9 +186,24 @@ impl FromWorld for TileAtlases {
       grid:  (14, 10),
     };
 
+    let player_base_atlas = TextureAtlas::from_grid(
+      player_base_texture_handle,
+      Vec2::new(64.0, 64.0),
+      16,
+      16,
+      None,
+      None,
+    );
+    let player_base_atlas_handle = texture_atlases.add(player_base_atlas);
+    let player_base_atlas = TextureAtlasWithGrid {
+      atlas: player_base_atlas_handle,
+      grid:  (16, 16),
+    };
+
     let atlases = TileAtlases {
-      grass: grass_atlas,
-      wall:  wall_atlas,
+      grass:       grass_atlas,
+      wall:        wall_atlas,
+      player_base: player_base_atlas,
     };
 
     atlases
