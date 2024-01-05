@@ -12,10 +12,27 @@ pub struct Player(pub PlayerStatus);
 #[derive(Clone, Reflect)]
 pub enum PlayerStatus {
   Stand(Direction4),
+  Walk(Vec2),
+  Run(Vec2),
 }
 
 impl Default for PlayerStatus {
   fn default() -> Self { PlayerStatus::Stand(Direction4::South) }
+}
+
+#[derive(Resource)]
+pub struct PlayerSpeeds {
+  pub walk: f32,
+  pub run:  f32,
+}
+
+impl Default for PlayerSpeeds {
+  fn default() -> Self {
+    PlayerSpeeds {
+      walk: 4.0,
+      run:  6.0,
+    }
+  }
 }
 
 impl TileType for PlayerStatus {
@@ -36,6 +53,12 @@ impl TileType for PlayerStatus {
       PlayerStatus::Stand(Direction4::West) => {
         vec![TileSheetCoords::new(0, 2).flip_x()]
       }
+      PlayerStatus::Walk(_) => {
+        todo!()
+      }
+      PlayerStatus::Run(_) => {
+        todo!()
+      }
     }
   }
   fn atlas_handle(&self, atlases: &TileAtlases) -> TextureAtlasWithGrid {
@@ -49,8 +72,16 @@ impl Plugin for PlayerPlugin {
   fn build(&self, app: &mut App) {
     app
       .register_type::<Player>()
+      .init_resource::<PlayerSpeeds>()
       .add_systems(Startup, setup)
-      .add_systems(Update, update_player_sprite);
+      .add_systems(
+        Update,
+        (
+          accept_movement_input,
+          (apply_movement, update_player_sprite),
+        )
+          .chain(),
+      );
   }
 }
 
@@ -83,5 +114,53 @@ fn update_player_sprite(
   for (player, mut sprite) in query.iter_mut() {
     let tile = Tile::new(player.0.clone());
     *sprite = tile.texture_atlas_sprite(&atlases);
+  }
+}
+
+fn accept_movement_input(
+  keyboard_input: Res<Input<KeyCode>>,
+  speeds: Res<PlayerSpeeds>,
+  mut query: Query<&mut Player>,
+) {
+  for mut player in query.iter_mut() {
+    let mut movement = Vec2::ZERO;
+    if keyboard_input.pressed(KeyCode::W) {
+      movement.y += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::S) {
+      movement.y -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::D) {
+      movement.x += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::A) {
+      movement.x -= 1.0;
+    }
+    movement = movement.normalize_or_zero();
+
+    let run = keyboard_input.pressed(KeyCode::ShiftLeft);
+    if movement != Vec2::ZERO {
+      if run {
+        player.0 = PlayerStatus::Run(movement);
+      } else {
+        player.0 = PlayerStatus::Walk(movement);
+      }
+    } else {
+      player.0 = PlayerStatus::Stand(Direction4::South);
+    }
+  }
+}
+
+fn apply_movement(
+  mut query: Query<(&mut Transform, &Player)>,
+  time: Res<Time>,
+) {
+  for (mut transform, player) in query.iter_mut() {
+    match player.0 {
+      PlayerStatus::Walk(movement) | PlayerStatus::Run(movement) => {
+        transform.translation += movement.extend(0.0) * time.delta_seconds();
+      }
+      _ => {}
+    }
   }
 }
