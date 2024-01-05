@@ -85,7 +85,7 @@ fn setup(
   asset_server: Res<AssetServer>,
   mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-  let grass_texture_handle = asset_server.load("textures/grass.png");
+  let grass_texture_handle = asset_server.load("textures/tiles/grass.png");
   let grass_atlas = TextureAtlas::from_grid(
     grass_texture_handle,
     Vec2::new(16.0, 16.0),
@@ -96,7 +96,7 @@ fn setup(
   );
   let grass_atlas_handle = texture_atlases.add(grass_atlas);
 
-  let wall_texture_handle = asset_server.load("textures/wall.png");
+  let wall_texture_handle = asset_server.load("textures/tiles/wall.png");
   let wall_atlas = TextureAtlas::from_grid(
     wall_texture_handle,
     Vec2::new(16.0, 16.0),
