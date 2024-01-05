@@ -28,7 +28,7 @@ impl Tile {
       TileType::TallWall(_) => false,
     }
   }
-  fn atlas_handle(&self, atlases: &Atlases) -> Handle<TextureAtlas> {
+  fn atlas_handle(&self, atlases: &TileAtlases) -> Handle<TextureAtlas> {
     match self._type {
       TileType::Grass | TileType::FloweryGrass | TileType::Flagstone => {
         atlases.grass.clone()
@@ -69,7 +69,7 @@ impl TilePosition {
 }
 
 #[derive(Resource, Clone)]
-struct Atlases {
+struct TileAtlases {
   grass: Handle<TextureAtlas>,
   wall:  Handle<TextureAtlas>,
 }
@@ -107,7 +107,7 @@ fn setup(
   );
   let wall_atlas_handle = texture_atlases.add(wall_atlas);
 
-  let atlases = Atlases {
+  let atlases = TileAtlases {
     grass: grass_atlas_handle,
     wall:  wall_atlas_handle,
   };
