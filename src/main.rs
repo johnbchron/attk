@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 fn main() {
@@ -48,7 +48,7 @@ impl Tile {
     }
   }
   fn index(&self) -> usize {
-    match self._type {
+    match &self._type {
       TileType::Grass => 2,
       TileType::FloweryGrass => 29,
       TileType::Flagstone => 128,
@@ -67,6 +67,15 @@ impl Tile {
       }
       TileType::TallWall(_) => Vec2::splat(32.0),
     }
+  }
+}
+
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct TilePosition(i64, i64);
+
+impl TilePosition {
+  fn world_position(&self) -> Vec3 {
+    Vec3::new(self.0 as f32, self.1 as f32, 0.0)
   }
 }
 
@@ -118,14 +127,21 @@ fn setup(
     ..default()
   });
 
-  let mut map = Vec::new();
-  map.push(TileType::Grass);
-  map.push(TileType::Grass);
+  let mut map = HashMap::new();
+  for i in -10..=10 {
+    for j in -10..=10 {
+      map.insert(TilePosition(i, j), Tile {
+        _type:   TileType::Grass,
+        variant: 0,
+      });
+    }
+  }
 
-  for tile in map {
+  for (pos, tile) in map {
     commands.spawn(SpriteSheetBundle {
       texture_atlas: tile.atlas_handle(&atlases),
-      transform: Transform::from_scale(tile.size().extend(1.0).recip()),
+      transform: Transform::from_scale(tile.size().extend(1.0).recip())
+        .with_translation(pos.world_position()),
       sprite: TextureAtlasSprite::new(tile.index()),
       ..Default::default()
     });
