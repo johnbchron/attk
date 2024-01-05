@@ -1,3 +1,4 @@
+pub mod player;
 pub mod tiles;
 
 use bevy::prelude::*;
@@ -9,6 +10,7 @@ fn main() {
       DefaultPlugins.set(ImagePlugin::default_nearest()),
       WorldInspectorPlugin::default(),
       tiles::TilePlugin,
+      player::PlayerPlugin,
     ))
     .run();
 }
