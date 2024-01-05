@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+#[derive(Clone, Copy, Reflect)]
 pub enum Direction4 {
   North,
   East,
@@ -7,6 +8,7 @@ pub enum Direction4 {
   West,
 }
 
+#[derive(Clone, Copy, Reflect)]
 pub enum Direction8 {
   North,
   NorthEast,
@@ -18,13 +20,16 @@ pub enum Direction8 {
   NorthWest,
 }
 
+#[derive(Clone, Copy, Reflect)]
 pub enum VerticalPart {
   Top,
   Bottom,
 }
 
-pub trait TileType {
-  fn size(&self) -> Vec2;
+pub trait TileType: Reflect {
+  /// The number of pixels in this tile that equals one world unit, and the the
+  /// offset in world units required to center this tile.
+  fn size_and_center(&self) -> (Vec2, Vec2);
   fn coords(&self) -> Vec<TileSheetCoords>;
   fn atlas_handle(&self, atlases: &TileAtlases) -> TextureAtlasWithGrid;
 }
@@ -58,6 +63,7 @@ pub struct Tile<Ty: TileType> {
 }
 
 impl<Ty: TileType> Tile<Ty> {
+  pub fn new(_type: Ty) -> Self { Self { _type, variant: 0 } }
   pub fn coords(&self) -> TileSheetCoords {
     let all_variants = self._type.coords();
     all_variants[self.variant % all_variants.len()].clone()
@@ -107,12 +113,13 @@ pub struct TilePosition {
 }
 
 impl TilePosition {
-  fn world_position(&self) -> Vec3 {
-    Vec3::new(self.x as f32, self.y as f32, self.layer as f32)
-  }
   pub fn transform<Ty: TileType>(&self, type_: &Ty) -> Transform {
-    Transform::from_translation(self.world_position())
-      .with_scale(type_.size().extend(1.0).recip())
+    let (size, offset) = type_.size_and_center();
+    Transform::from_translation(
+      Vec3::new(self.x as f32, self.y as f32, self.layer as f32)
+        + offset.extend(0.0),
+    )
+    .with_scale(size.extend(1.0).recip())
   }
 }
 

@@ -5,6 +5,7 @@ use crate::tile::{
   TilePosition, TileSheetCoords, TileType, VerticalPart,
 };
 
+#[derive(Clone, Reflect)]
 enum MapTile {
   Grass,
   FloweryGrass,
@@ -16,7 +17,7 @@ enum MapTile {
 }
 
 impl TileType for MapTile {
-  fn size(&self) -> Vec2 { Vec2::splat(32.0) }
+  fn size_and_center(&self) -> (Vec2, Vec2) { (Vec2::splat(16.0), Vec2::ZERO) }
   fn coords(&self) -> Vec<TileSheetCoords> {
     match self {
       MapTile::Grass => rect_range_with_x_flip(0, 0, 4, 4),
@@ -68,8 +69,8 @@ fn setup(mut commands: Commands, atlases: Res<TileAtlases>) {
   for i in -10..=10 {
     for j in -10..=10 {
       let pos = TilePosition {
-        x:     i,
-        y:     j,
+        x:     i * 2,
+        y:     j * 2,
         layer: 0,
       };
       let _type = if i == 0 && j == 0 {
