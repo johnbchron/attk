@@ -12,20 +12,58 @@ enum MapTile {
   Flagstone,
   TallWall {
     corner: Direction8,
-    height: VerticalPart,
+    part:   VerticalPart,
   },
 }
 
 impl TileType for MapTile {
-  fn size_and_center(&self) -> (Vec2, Vec2) { (Vec2::splat(16.0), Vec2::ZERO) }
+  fn size_and_center(&self) -> (Vec2, Vec2) {
+    match self {
+      MapTile::Grass | MapTile::FloweryGrass | MapTile::Flagstone => {
+        (Vec2::splat(16.0), Vec2::ZERO)
+      }
+      MapTile::TallWall { .. } => (Vec2::splat(16.0), Vec2::ZERO),
+    }
+  }
   fn coords(&self) -> Vec<TileSheetCoords> {
     match self {
       MapTile::Grass => rect_range_with_x_flip(0, 0, 4, 4),
       MapTile::FloweryGrass => rect_range_with_x_flip(4, 0, 4, 4),
       MapTile::Flagstone => rect_range_with_x_flip(0, 4, 2, 3),
-      MapTile::TallWall { .. } => {
-        todo!()
-      }
+      MapTile::TallWall { corner, part } => match corner {
+        Direction8::North => match part {
+          VerticalPart::Top => vec![TileSheetCoords::new(2, 1)],
+          VerticalPart::Bottom => vec![TileSheetCoords::new(2, 2)],
+        },
+        Direction8::NorthEast => match part {
+          VerticalPart::Top => vec![TileSheetCoords::new(3, 1)],
+          VerticalPart::Bottom => vec![TileSheetCoords::new(3, 2)],
+        },
+        Direction8::East => match part {
+          VerticalPart::Top => vec![TileSheetCoords::new(3, 2)],
+          VerticalPart::Bottom => vec![TileSheetCoords::new(2, 2)],
+        },
+        Direction8::SouthEast => match part {
+          VerticalPart::Top => vec![TileSheetCoords::new(3, 3)],
+          VerticalPart::Bottom => vec![TileSheetCoords::new(3, 4)],
+        },
+        Direction8::South => match part {
+          VerticalPart::Top => vec![TileSheetCoords::new(2, 3)],
+          VerticalPart::Bottom => vec![TileSheetCoords::new(2, 4)],
+        },
+        Direction8::SouthWest => match part {
+          VerticalPart::Top => vec![TileSheetCoords::new(1, 3)],
+          VerticalPart::Bottom => vec![TileSheetCoords::new(1, 4)],
+        },
+        Direction8::West => match part {
+          VerticalPart::Top => vec![TileSheetCoords::new(1, 2)],
+          VerticalPart::Bottom => vec![TileSheetCoords::new(2, 2)],
+        },
+        Direction8::NorthWest => match part {
+          VerticalPart::Top => vec![TileSheetCoords::new(1, 1)],
+          VerticalPart::Bottom => vec![TileSheetCoords::new(1, 2)],
+        },
+      },
     }
   }
   fn atlas_handle(&self, atlases: &TileAtlases) -> TextureAtlasWithGrid {
@@ -77,6 +115,33 @@ fn setup(mut commands: Commands, atlases: Res<TileAtlases>) {
         variant: (i + 10) as usize * (j + 10) as usize,
       });
     }
+  }
+
+  let mut wall_map = HashMap::new();
+  wall_map.insert((3, 5), Direction8::SouthWest);
+  wall_map.insert((5, 5), Direction8::South);
+  wall_map.insert((7, 5), Direction8::SouthEast);
+  wall_map.insert((3, 7), Direction8::West);
+  wall_map.insert((7, 7), Direction8::East);
+  wall_map.insert((3, 9), Direction8::NorthWest);
+  wall_map.insert((5, 9), Direction8::North);
+  wall_map.insert((7, 9), Direction8::NorthEast);
+
+  for (pos, corner) in wall_map {
+    map.insert(
+      TilePosition::new(pos.0, pos.1, 1),
+      Tile::new(MapTile::TallWall {
+        corner,
+        part: VerticalPart::Bottom,
+      }),
+    );
+    map.insert(
+      TilePosition::new(pos.0, pos.1 + 2, 2),
+      Tile::new(MapTile::TallWall {
+        corner,
+        part: VerticalPart::Top,
+      }),
+    );
   }
 
   for (pos, tile) in map {
