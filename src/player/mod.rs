@@ -71,6 +71,7 @@ fn setup(mut commands: Commands, atlases: Res<TileAtlases>) {
   ));
 }
 
+#[allow(clippy::type_complexity)]
 fn update_player_sprite(
   mut commands: Commands,
   mut query: Query<

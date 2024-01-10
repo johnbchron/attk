@@ -202,13 +202,11 @@ impl FromWorld for TileAtlases {
       grid:  (16, 16),
     };
 
-    let atlases = TileAtlases {
+    TileAtlases {
       grass:       grass_atlas,
       wall:        wall_atlas,
       player_base: player_base_atlas,
-    };
-
-    atlases
+    }
   }
 }
 

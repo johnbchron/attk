@@ -20,16 +20,14 @@ impl TryFrom<Vec2> for Direction4 {
     // favor vertical directions if a multiple of 45 degrees
     if value.x.abs() <= 0.5 {
       if value.y > 0.0 {
-        return Ok(Direction4::North);
+        Ok(Direction4::North)
       } else {
-        return Ok(Direction4::South);
+        Ok(Direction4::South)
       }
+    } else if value.x > 0.0 {
+      Ok(Direction4::East)
     } else {
-      if value.x > 0.0 {
-        return Ok(Direction4::East);
-      } else {
-        return Ok(Direction4::West);
-      }
+      Ok(Direction4::West)
     }
   }
 }
