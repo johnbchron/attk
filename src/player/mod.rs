@@ -93,16 +93,14 @@ fn update_player_sprite(
         tile.tick(time.delta_seconds());
       } else {
         // if the style doesn't match, reset the tick unless we're going
-        // from run -> walk or walk -> run
-        let run_to_walk = matches!(
-          (&tile.tile._type, &player.0),
-          (PlayerStatus::Walk(_), PlayerStatus::Run(_))
+        // from a run or walk to another run or walk
+        let old_was_run_or_walk = matches!(
+          tile.tile._type,
+          PlayerStatus::Walk(_) | PlayerStatus::Run(_)
         );
-        let walk_to_run = matches!(
-          (&tile.tile._type, &player.0),
-          (PlayerStatus::Run(_), PlayerStatus::Walk(_))
-        );
-        if run_to_walk || walk_to_run {
+        let new_is_run_or_walk =
+          matches!(player.0, PlayerStatus::Walk(_) | PlayerStatus::Run(_));
+        if old_was_run_or_walk && new_is_run_or_walk {
           let mut new_tile = AnimatedTile::new(Tile::new(player.0.clone()));
           new_tile.time = tile.time;
           *tile = new_tile;
@@ -155,7 +153,7 @@ fn accept_movement_input(
   }
 }
 
-fn apply_movement(
+pub fn apply_movement(
   mut query: Query<(&mut Transform, &Player)>,
   time: Res<Time>,
 ) {
