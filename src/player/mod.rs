@@ -155,7 +155,7 @@ fn accept_movement_input(
   }
 }
 
-fn apply_movement(
+pub fn apply_movement(
   mut query: Query<(&mut Transform, &Player)>,
   time: Res<Time>,
 ) {

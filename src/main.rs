@@ -1,3 +1,4 @@
+pub mod camera;
 pub mod map;
 pub mod player;
 pub mod tile;
@@ -13,6 +14,7 @@ fn main() {
       tile::TilePlugin,
       map::MapPlugin,
       player::PlayerPlugin,
+      camera::CameraPlugin,
     ))
     .run();
 }

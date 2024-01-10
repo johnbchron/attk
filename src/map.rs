@@ -57,15 +57,6 @@ impl Plugin for MapPlugin {
 }
 
 fn setup(mut commands: Commands, atlases: Res<TileAtlases>) {
-  commands.spawn(Camera2dBundle {
-    projection: OrthographicProjection {
-      near: -1000.0,
-      scale: 64.0_f32.recip(),
-      ..default()
-    },
-    ..default()
-  });
-
   let mut map = HashMap::new();
   for i in -10..=10 {
     for j in -10..=10 {
