@@ -1,26 +1,18 @@
 use bevy::prelude::*;
 
+use self::status::PlayerStatus;
 use crate::tile::{
-  Direction4, TextureAtlasWithGrid, Tile, TileAtlases, TilePosition,
-  TileSheetCoords, TileType,
+  AnimatedTile, Direction4, Tile, TileAtlases, TilePosition, TileType,
 };
 
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
 pub struct Player(pub PlayerStatus);
 
-#[derive(Clone, Reflect)]
-pub enum PlayerStatus {
-  Stand(Direction4),
-  Walk(Vec2),
-  Run(Vec2),
-}
+mod status;
 
-impl Default for PlayerStatus {
-  fn default() -> Self { PlayerStatus::Stand(Direction4::South) }
-}
-
-#[derive(Resource)]
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
 pub struct PlayerSpeeds {
   pub walk: f32,
   pub run:  f32,
@@ -29,40 +21,9 @@ pub struct PlayerSpeeds {
 impl Default for PlayerSpeeds {
   fn default() -> Self {
     PlayerSpeeds {
-      walk: 4.0,
-      run:  6.0,
+      walk: 3.0,
+      run:  4.0,
     }
-  }
-}
-
-impl TileType for PlayerStatus {
-  fn size_and_center(&self) -> (Vec2, Vec2) {
-    (Vec2::splat(16.0), Vec2::new(0.0, 0.5))
-  }
-  fn coords(&self) -> Vec<TileSheetCoords> {
-    match self {
-      PlayerStatus::Stand(Direction4::North) => {
-        vec![TileSheetCoords::new(0, 1)]
-      }
-      PlayerStatus::Stand(Direction4::East) => {
-        vec![TileSheetCoords::new(0, 2)]
-      }
-      PlayerStatus::Stand(Direction4::South) => {
-        vec![TileSheetCoords::new(0, 0)]
-      }
-      PlayerStatus::Stand(Direction4::West) => {
-        vec![TileSheetCoords::new(0, 2).flip_x()]
-      }
-      PlayerStatus::Walk(_) => {
-        todo!()
-      }
-      PlayerStatus::Run(_) => {
-        todo!()
-      }
-    }
-  }
-  fn atlas_handle(&self, atlases: &TileAtlases) -> TextureAtlasWithGrid {
-    atlases.player_base.clone()
   }
 }
 
@@ -72,6 +33,9 @@ impl Plugin for PlayerPlugin {
   fn build(&self, app: &mut App) {
     app
       .register_type::<Player>()
+      .register_type::<Tile<PlayerStatus>>()
+      .register_type::<AnimatedTile<PlayerStatus>>()
+      .register_type::<PlayerSpeeds>()
       .init_resource::<PlayerSpeeds>()
       .add_systems(Startup, setup)
       .add_systems(
@@ -108,12 +72,50 @@ fn setup(mut commands: Commands, atlases: Res<TileAtlases>) {
 }
 
 fn update_player_sprite(
-  mut query: Query<(&Player, &mut TextureAtlasSprite), Changed<Player>>,
+  mut commands: Commands,
+  mut query: Query<
+    (
+      Entity,
+      &Player,
+      &mut TextureAtlasSprite,
+      Option<&mut AnimatedTile<PlayerStatus>>,
+    ),
+    Changed<Player>,
+  >,
   atlases: Res<TileAtlases>,
+  time: Res<Time>,
 ) {
-  for (player, mut sprite) in query.iter_mut() {
-    let tile = Tile::new(player.0.clone());
-    *sprite = tile.texture_atlas_sprite(&atlases);
+  for (entity, player, mut sprite, tile) in query.iter_mut() {
+    if let Some(mut tile) = tile {
+      // if the status matches, just tick the tile
+      if tile.tile._type == player.0 {
+        tile.tick(time.delta_seconds());
+      } else {
+        // if the style doesn't match, reset the tick unless we're going
+        // from run -> walk or walk -> run
+        let run_to_walk = matches!(
+          (&tile.tile._type, &player.0),
+          (PlayerStatus::Walk(_), PlayerStatus::Run(_))
+        );
+        let walk_to_run = matches!(
+          (&tile.tile._type, &player.0),
+          (PlayerStatus::Run(_), PlayerStatus::Walk(_))
+        );
+        if run_to_walk || walk_to_run {
+          let mut new_tile = AnimatedTile::new(Tile::new(player.0.clone()));
+          new_tile.time = tile.time;
+          *tile = new_tile;
+          tile.tick(time.delta_seconds());
+        } else {
+          *tile = AnimatedTile::new(Tile::new(player.0.clone()));
+        }
+      }
+      *sprite = tile.tile.texture_atlas_sprite(&atlases);
+    } else {
+      let tile = AnimatedTile::new(Tile::new(player.0.clone()));
+      *sprite = tile.tile.texture_atlas_sprite(&atlases);
+      commands.entity(entity).insert(tile);
+    }
   }
 }
 
@@ -137,16 +139,17 @@ fn accept_movement_input(
       movement.x -= 1.0;
     }
     movement = movement.normalize_or_zero();
-
     let run = keyboard_input.pressed(KeyCode::ShiftLeft);
+
+    let old_status = player.0.clone();
     if movement != Vec2::ZERO {
       if run {
-        player.0 = PlayerStatus::Run(movement);
+        player.0 = PlayerStatus::Run(movement * speeds.run);
       } else {
-        player.0 = PlayerStatus::Walk(movement);
+        player.0 = PlayerStatus::Walk(movement * speeds.walk);
       }
     } else {
-      player.0 = PlayerStatus::Stand(Direction4::South);
+      player.0 = PlayerStatus::Stand(old_status.direction());
     }
   }
 }

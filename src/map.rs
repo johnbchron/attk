@@ -23,7 +23,7 @@ impl TileType for MapTile {
       MapTile::Grass => rect_range_with_x_flip(0, 0, 4, 4),
       MapTile::FloweryGrass => rect_range_with_x_flip(4, 0, 4, 4),
       MapTile::Flagstone => rect_range_with_x_flip(0, 4, 2, 3),
-      MapTile::TallWall { corner, height } => {
+      MapTile::TallWall { .. } => {
         todo!()
       }
     }
@@ -39,6 +39,7 @@ impl TileType for MapTile {
 }
 
 impl Tile<MapTile> {
+  #[allow(dead_code)]
   fn passable(&self) -> bool {
     match self._type {
       MapTile::Grass => true,

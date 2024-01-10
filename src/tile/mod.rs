@@ -1,30 +1,8 @@
+mod ident;
+
 use bevy::prelude::*;
 
-#[derive(Clone, Copy, Reflect)]
-pub enum Direction4 {
-  North,
-  East,
-  South,
-  West,
-}
-
-#[derive(Clone, Copy, Reflect)]
-pub enum Direction8 {
-  North,
-  NorthEast,
-  East,
-  SouthEast,
-  South,
-  SouthWest,
-  West,
-  NorthWest,
-}
-
-#[derive(Clone, Copy, Reflect)]
-pub enum VerticalPart {
-  Top,
-  Bottom,
-}
+pub use self::ident::*;
 
 pub trait TileType: Reflect {
   /// The number of pixels in this tile that equals one world unit, and the the
@@ -32,6 +10,7 @@ pub trait TileType: Reflect {
   fn size_and_center(&self) -> (Vec2, Vec2);
   fn coords(&self) -> Vec<TileSheetCoords>;
   fn atlas_handle(&self, atlases: &TileAtlases) -> TextureAtlasWithGrid;
+  fn anim_speed(&self) -> Option<f32> { None }
 }
 
 pub fn rect_range(
@@ -57,6 +36,7 @@ pub fn rect_range_with_x_flip(
     .collect()
 }
 
+#[derive(Component, Reflect)]
 pub struct Tile<Ty: TileType> {
   pub _type:   Ty,
   pub variant: usize,
@@ -75,6 +55,21 @@ impl<Ty: TileType> Tile<Ty> {
     let coords = self.coords();
     let atlas = self._type.atlas_handle(atlases);
     atlas.texture_atlas_sprite(coords)
+  }
+}
+
+#[derive(Component, Reflect)]
+pub struct AnimatedTile<Ty: TileType> {
+  pub tile: Tile<Ty>,
+  pub time: f32,
+}
+
+impl<Ty: TileType> AnimatedTile<Ty> {
+  pub fn new(tile: Tile<Ty>) -> Self { Self { tile, time: 0.0 } }
+  pub fn anim_speed(&self) -> Option<f32> { self.tile._type.anim_speed() }
+  pub fn tick(&mut self, delta: f32) {
+    self.time += delta;
+    self.tile.variant = (self.time * self.anim_speed().unwrap_or(1.0)) as usize;
   }
 }
 
