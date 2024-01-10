@@ -116,6 +116,7 @@ impl TilePosition {
     )
     .with_scale(size.extend(1.0).recip())
   }
+  pub fn new(x: i64, y: i64, layer: u8) -> Self { Self { x, y, layer } }
 }
 
 #[derive(Clone)]
@@ -176,10 +177,10 @@ impl FromWorld for TileAtlases {
 
     let wall_atlas = TextureAtlas::from_grid(
       wall_texture_handle,
-      Vec2::new(16.0, 16.0),
+      Vec2::new(32.0, 32.0),
       14,
       10,
-      Some(Vec2::new(16.0, 16.0)),
+      None,
       None,
     );
     let wall_atlas_handle = texture_atlases.add(wall_atlas);
